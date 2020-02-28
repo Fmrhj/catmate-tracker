@@ -17,6 +17,7 @@ import cat_modules
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app: Dash = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
 
 # Open connection to read cat_meals db
 engine = db.create_engine('sqlite:///catmeals.sqlite', echo=False)
