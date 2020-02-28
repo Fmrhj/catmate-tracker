@@ -30,11 +30,10 @@ fig = go.Figure()
 fig.add_trace(go.Scatter(x=sql_DF['next_meals'],
                          y=sql_DF['remaining_meals'],
                          name="Remaining cat meals",
-                         line_color='deepskyblue',
                          opacity=1.0,
-                         marker = dict(size = 20,
-                                      color=[5, 4, 3, 2],
-                                       colorscale='Blues'),
+                         marker=dict(size=20,
+                                     color=[5, 4, 3, 2],
+                                     colorscale='Blues'),
                          mode='markers'
                         ))
 
