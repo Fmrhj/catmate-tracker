@@ -11,19 +11,12 @@ import plotly
 import plotly.graph_objects as go
 from datetime import datetime
 from datetime import timedelta
-import dash-auth
 from collections import deque
 import cat_modules
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app: Dash = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-app = dash.Dash('auth')
-auth = dash_auth.BasicAuth(
-    app,
-    VALID_USERNAME_PASSWORD_PAIRS
-)
 
 # Open connection to read cat_meals db
 engine = db.create_engine('sqlite:///catmeals.sqlite', echo=False)
@@ -74,6 +67,7 @@ app.layout = html.Div([
         columns=[{"name": i, "id": i} for i in sql_DF.columns],
         data=sql_DF.to_dict('records'),
     ),
+    html.Br(),
     html.Label('Update history'),
     dcc.Graph(id='live-graph', animate=True, figure=fig)
 ])
