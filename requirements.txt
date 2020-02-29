@@ -11,6 +11,7 @@ cssselect==1.1.0
 cssutils==1.0.2
 cycler==0.10.0
 dash==1.8.0
+dash-bootstrap-components==0.8.2
 dash-core-components==1.7.0
 dash-html-components==1.0.2
 dash-renderer==1.2.3
