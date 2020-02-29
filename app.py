@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
@@ -22,6 +23,7 @@ server = app.server
 # Open connection to read cat_meals db
 engine = db.create_engine('sqlite:///catmeals.sqlite', echo=False)
 sql_DF = pd.read_sql("SELECT * FROM cat_meals", con=engine)
+sql_DF = sql_DF.drop('index', axis = 1)
 print(sql_DF)
 
 # Style variables
@@ -32,44 +34,97 @@ fig.add_trace(go.Scatter(x=sql_DF['next_meals'],
                          y=sql_DF['remaining_meals'],
                          name="Remaining cat meals",
                          opacity=1.0,
-                         marker=dict(size=20,
-                                     color=[5, 4, 3, 2],
-                                     colorscale='Blues'),
-                         mode='markers'
-                        ))
+                         marker=dict(size=30,
+                                     line=dict(color="black"),
+                                     symbol='x'),
+                         mode='markers',
+                         visible='legendonly',
+                         hovertemplate="date: %{x}<br>remaining meals: %{y}<extra></extra>"))
 
 fig.update_layout(xaxis_range=[datetime.now() - timedelta(days=1),
                                datetime.now() + timedelta(days=1)],
                   title_text="",
-                  xaxis_rangeslider_visible=True,
-                  template = "plotly_white")
+                  template="plotly_white")
+
+fig.add_shape(
+    dict(
+        type="line",
+        x0=datetime.now(),
+        y0=0,
+        x1=datetime.now(),
+        y1=5,
+        line=dict(
+            color="RoyalBlue",
+            width=3
+            )
+))
+
+fig.add_trace(go.Scatter(
+    x=[datetime.now()],
+    y=[-0.5],
+    text=["Now"],
+    mode="text",
+    showlegend=False
+))
 
 # Define app layout
 app.layout = html.Div([
     # Title
     html.H1(
-        children='CatMate Tracker',
+        children='Catmate Tracker',
         style={
-            'textAlign': 'left',
+            'textAlign': 'center',
             'color': colors['text']
         }
     ),
+    dcc.Markdown('''
+        A web application for tracking the [catmate](https://pet-mate.com/gb/product/c300-automatic-pet-feeder-with-digital-timer/) status
+    ''',
+                 style={'textAlign': 'center'}),
+    # Update button container
+    html.Div(html.Button('Update!',
+                id='button',
+                style={'textAlign': 'center'}),
+             style={'textAlign': 'center'}
+             ),
+    # Update button container
     html.Div(id='output-container-button',
-             children='Press Update! after filling the catmate...'),
+             children='Press Update! after filling the catmate...',
+             style={'textAlign': 'center'}),
     html.Br(),
-    html.Label('Update button'),
-    html.Button('Update!', id='button'),
-    html.Br(),
-    html.Br(),
-    html.Label('Data'),
     dash_table.DataTable(
         id='table',
-        columns=[{"name": i, "id": i} for i in sql_DF.columns],
+        columns=[{"name": i, "id": i, "selectable": True} for i in sql_DF.columns],
         data=sql_DF.to_dict('records'),
+        editable=False,
+        style_as_list_view=True,
+        style_cell={'padding': '5px', 'textAlign': 'left'},
+        style_cell_conditional=[{'if': {'column_id': 'remaining_meals'}, 'textAlign': 'center'}],
+        sort_action="native",
+        page_action="native",
+        style_header={
+            'backgroundColor': 'rgb(230, 230, 230)',
+            'fontWeight': 'bold'
+        },
+        style_data_conditional=[{
+            "if": {'column_id': str(x),
+                   # create the filter query JS + python
+                   'filter_query': ('{next_meals} > ' + datetime.now().strftime("%Y-%m-%d%H:%M:%S"))
+                   },
+            "backgroundColor": "#3D9970",
+            'color': 'white'} for x in sql_DF.columns
+        ]
     ),
     html.Br(),
-    html.Label('Update history'),
-    dcc.Graph(id='live-graph', animate=True, figure=fig)
+    dcc.Graph(id='live-graph', animate=True, figure=fig),
+    html.Hr(),
+    dcc.Markdown(f'''v0.1
+{datetime.now().strftime("%Y-%m-%d")}
+
+Check the project in [GitHub/Fmrhj](https://github.com/Fmrhj/catmate-tracker) 
+    ''',
+                 style={'textAlign': 'center'})
+
 ])
 
 
@@ -78,7 +133,6 @@ app.layout = html.Div([
     [Input('button', 'n_clicks')])
 def update_output(n_clicks):
     return 'The button has been clicked {} times'.format(n_clicks)
-
 
 if __name__ == '__main__':
     app.run_server(debug=False)
