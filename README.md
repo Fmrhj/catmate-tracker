@@ -1,4 +1,4 @@
-# Catmate-tracker
+# Catmate-tracker ![Heroku](http://heroku-badge.herokuapp.com/?app=catmate-tracker&root=projects.html)
 My cats take their meals really seriously. I have been obligued to create a tracker to be 100% sure they get their food.
 
 
