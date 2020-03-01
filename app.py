@@ -17,8 +17,11 @@ import cat_modules as cats
 import dash_bootstrap_components as dbc
 import numpy as np
 import sqlite3
+import os
+import time
 
 # Global variables
+os.environ['TZ'] = 'Europe/Berlin'
 standard_date_format = "%Y-%m-%d %H:%M:%S"
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -36,7 +39,12 @@ server = app.server
 def get_data(target_db_uri):
     engine = db.create_engine(target_db_uri, echo=False)
     tmp_table = pd.read_sql("SELECT * FROM cat_meals", con=engine)
+    tmp_table['next_meals'] = pd.to_datetime(tmp_table['next_meals'].str.strip(), format=standard_date_format)
     tmp_table = tmp_table.drop('index', axis=1)
+
+    # Get just the last 4 records
+    tmp_table = tmp_table.iloc[-4:]
+
     # Check the time format
     print("[STATUS] Actual future meal records:")
     print(tmp_table)
@@ -79,47 +87,59 @@ def generate_plot(data_frame_input):
     return fig
 
 
-# Get data from sqllite
-sql_df = get_data(db_uri)
-
 # Define app layout
 app.layout = html.Div([
 
-    # Title
-    html.H1(
-        children='Catmate Tracker',
-        style={
-            'textAlign': 'center',
-            'color': colors['text']
-        }
-    ),
+    html.Div([
 
-    dcc.Markdown('''
-            A web application for tracking the [catmate](https://pet-mate.com/gb/product/c300-automatic-pet-feeder-with-digital-timer/) status
-            
-        ''',
-                 style={'textAlign': 'center'}),
+        # Erich
+        html.Div(html.Img(src=app.get_asset_url("img_cat_stick_erich.jpg"), style={"width": "100%"}),
+                 className="two columns"),
 
-    # Update button container
-    html.Div(html.Button('Update!',
-                         id='button',
-                         style={'textAlign': 'center'}),
-             style={'textAlign': 'center'}
-             ),
+        # Title
+        html.Div([
 
+            # Title
+            html.H1(children=['Catmate Tracker'],
+                     style={'textAlign': 'center',
+                            'color': colors['text']}),
+
+             # Markdown description
+             dcc.Markdown('''
+             A web application for tracking the [catmate](https://pet-mate.com/gb/product/c300-automatic-pet-feeder-with-digital-timer/) status
+             ''',
+                          style={'textAlign': 'center'}),
+
+             # Update button container
+             html.Div(html.Button('Update!',
+                                  id='button',
+                                  style={'textAlign': 'center'}),
+                      style={'textAlign': 'center'}
+                      ),
+
+             html.Div(id="recent-update", style={'textAlign': 'center'})
+
+             ],
+            className="eight columns"),
+
+        # Rieke
+        html.Div(html.Img(src=app.get_asset_url("img_cat_stick_rieke_1.jpg"),
+                          style={"width": "100%", "textAlign": "left"})
+                 , className="two columns")
+
+    ], className="row"),
+
+
+
+    html.Br(),
     # Update button container
     html.Div(id='output-container-button',
              children='Press Update! after filling the catmate...',
              style={'textAlign': 'center'}),
 
-    html.Div(id="recent-update", style={'textAlign': 'center'}),
-    html.Br(),
-
     html.Div(
         children=[dash_table.DataTable(
             id='table',
-            columns=[{"name": i, "id": i, "selectable": True} for i in sql_df.columns],
-            data=sql_df.to_dict('records'),
             editable=False,
             style_as_list_view=True,
             style_cell={'padding': '5px', 'textAlign': 'left'},
@@ -129,16 +149,7 @@ app.layout = html.Div([
             style_header={
                 'backgroundColor': 'rgb(230, 230, 230)',
                 'fontWeight': 'bold'
-            },
-            style_data_conditional=[{
-                "if": {'column_id': str(x),
-                       # create the filter query JS + python. Really important: use the JS time format
-                       'filter_query': '{next_meals} > ' + datetime.now().strftime("%Y-%m-%d") +
-                                       'T' + datetime.now().strftime("%H:%M:%S")
-                       },
-                "backgroundColor": colors['general'],
-                'color': 'white'} for x in sql_df.columns
-            ]
+            }
         )],
         className='row'
     ),
@@ -147,7 +158,7 @@ app.layout = html.Div([
 
     html.Div(id='live-update-text'),
 
-    dcc.Graph(id='live-graph', animate=True, figure=generate_plot(sql_df)),
+    dcc.Graph(id='live-graph', animate=True),
 
     html.Div(id="new-records", style={'textAlign': 'center'}),
 
@@ -157,7 +168,7 @@ app.layout = html.Div([
 
     html.Hr(),
 
-    dcc.Markdown(f'''v0.1
+    dcc.Markdown(f'''v1.1
 {datetime.now().strftime("%B %Y")}
 
 Check the project in [GitHub/Fmrhj](https://github.com/Fmrhj/catmate-tracker) 
@@ -174,10 +185,9 @@ Check the project in [GitHub/Fmrhj](https://github.com/Fmrhj/catmate-tracker)
     Output('output-container-button', 'children'),
     [Input('button', 'n_clicks')])
 def update_output(n_clicks):
-    msg = 'The button has been clicked {} times'.format(n_clicks)
+    msg = ""
     if n_clicks is not None:
-        tmp = "Table has been successfully updated!"
-        msg = 'The button has been clicked {} times'.format(n_clicks) + '. ' + tmp
+        msg = "Table has been successfully updated!"
     return msg
 
 
@@ -187,15 +197,15 @@ def update_output(n_clicks):
 def update_metrics(n):
     style = {'padding': '5px', 'fontSize': '20px'}
     return [
-        html.Span(f'Actual Time: {datetime.now().strftime("%Y-%m-%d %H:%M")}', style=style),
+        html.Span(f'Actual Time in Berlin: {datetime.now().strftime("%Y-%m-%d %H:%M")}', style=style),
     ]
 
 
 @app.callback(
     Output("new-records", "children"),
-    [Input("button", "n_clicks")],
-)
+    [Input("button", "n_clicks")])
 def add_and_show_records(n):
+
     if n is not None:
         # Create new pandas data frame with future meals
         new_records = cats.generate_next_meals_table()
@@ -203,28 +213,76 @@ def add_and_show_records(n):
         print(new_records)
 
         # Open connection
-        con = sqlite3.connect("catmeals.sqlite")
+        engine = db.create_engine(db_uri, echo=False)
+        conn = engine.connect()
 
         # Write results
-        new_records.to_sql("cat_meals", con, if_exists="replace")
+        new_records.to_sql("cat_meals", conn, if_exists="append")
 
         # Close connection
-        con.close()
+        conn.close()
 
     return html.Span("")
 
 
-@app.callback(
-    Output("recent-update", "children"),
+@app.callback([
+    Output("recent-update", "children"), Output("button", "style")],
     [Input('interval-component', 'n_intervals')])
 def check_recent_update(n):
     tmp_check = get_data(db_uri)
-    last_value = tmp_check['time_stamp'][0]
+    # Extract last time_stamp value
+    last_value = tmp_check['time_stamp'][tmp_check.index[-1]]
     msg = ""
+
+    # Active button
+    button_display = dict()
+
     # Check if the table has been update recently, i.e. in the last 2 hours
-    if datetime.now() < datetime.strptime(last_value, standard_date_format) + timedelta(hours=2):
-        msg = "The records have been updated recently"
-    return msg
+    check_boolean = datetime.now() < datetime.strptime(last_value, standard_date_format) + timedelta(hours=12)
+
+    if check_boolean:
+        msg = "Meals have been updated in the last 12 hours"
+        button_display = dict(display="none")
+
+    return msg, button_display
+
+
+# plot callback
+@app.callback([
+    Output('live-graph', 'figure')],
+    [Input('interval-component', 'n_intervals')]
+)
+def update_plot(n):
+    # Get data from sqllite
+    tmp_data = get_data(db_uri)
+    return [generate_plot(tmp_data)]
+
+# table callback
+# plot callback
+@app.callback(
+    [Output('table', 'data'),
+     Output('table', 'columns'),
+     Output('table', 'style_data_conditional')
+     ],
+    [Input('interval-component', 'n_intervals')]
+)
+def update_table(n):
+    # Get data from sqllite
+    tmp_data = get_data(db_uri)
+
+    columns = [{"name": i, "id": i, "selectable": True} for i in tmp_data.columns]
+    data = tmp_data.to_dict('records')
+    style_data_conditional = [{
+        "if": {'column_id': str(x),
+               # create the filter query JS + python. Really important: use the JS time format
+               'filter_query': '{next_meals} > ' + datetime.now().strftime("%Y-%m-%d") +
+                               'T' + datetime.now().strftime("%H:%M:%S")
+               },
+        "backgroundColor": colors['general'],
+        'color': 'white'} for x in tmp_data.columns
+    ]
+
+    return data, columns, style_data_conditional
 
 
 if __name__ == '__main__':

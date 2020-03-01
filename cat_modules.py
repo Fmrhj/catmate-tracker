@@ -5,6 +5,7 @@ import pandas as pd
 
 standard_date_format = "%Y-%m-%d %H:%M:%S"
 
+
 def perdelta(start, end, delta):
     # generates a range of dates separated with start and end dates and a delta
     curr = start
