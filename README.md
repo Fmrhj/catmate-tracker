@@ -13,7 +13,7 @@ To build this simple application, I used:
 ## Further notes 
 
 ### Hosting images with Dash
-The dash application can render images saved in the ```/assets``` directory. To call you can use the command:
+The dash application can render images saved in the ```assets``` directory. To call them and render them you can use the command:
 
 ```Python
  html.Div(html.Img(src=app.get_asset_url("img_cat_stick_erich.jpg"), style={"width": "100%"})
