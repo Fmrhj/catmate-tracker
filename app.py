@@ -87,6 +87,8 @@ def generate_plot(data_frame_input):
     return fig
 
 
+app.title = 'Catmate Tracker'
+
 # Define app layout
 app.layout = html.Div([
 
