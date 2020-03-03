@@ -6,8 +6,7 @@ To build this simple application, I used:
 
 - [Dash](https://dash.plot.ly/): Python framework written on top of flask for fast web development and simple applications.
 - [Plotly](https://plot.ly/): API with interfaces for Python and R. 
-- [SQLAlchemy](https://www.sqlalchemy.org/): orm and connection manager for Python. ~~I use a simple [SQLlite](https://www.sqlite.org/index.html) database in the backend.  ~~ 
-See this [link](https://devcenter.heroku.com/articles/sqlite3) to find out why that is actually a bad idea. TLDR: Heroku runs a ephemeral filesystem, i.e. no matter what you store or read, this will be cleared periodically (every 24 hours). A better solution is to use the [Heroku Postgresql add-on](https://elements.heroku.com/addons/heroku-postgresql). See below for further setup information. 
+- [SQLAlchemy](https://www.sqlalchemy.org/): orm and connection manager for Python. Originally I thought using a simple [SQLlite](https://www.sqlite.org/index.html) database in the backend. See this [link](https://devcenter.heroku.com/articles/sqlite3) to find out why that is actually a bad idea. TLDR: Heroku runs a ephemeral filesystem, i.e. no matter what you store or read, this will be cleared periodically (every 24 hours). A better solution is to use the [Heroku Postgresql add-on](https://elements.heroku.com/addons/heroku-postgresql). Read below further setup information. 
 - [GitHub](www.github.com): source code management
 - [Heroku](http://www.heroku.com/): to deploy the app 
 
