@@ -6,11 +6,25 @@ To build this simple application, I used:
 
 - [Dash](https://dash.plot.ly/): Python framework written on top of flask for fast web development and simple applications.
 - [Plotly](https://plot.ly/): API with interfaces for Python and R. 
-- [SQLAlchemy](https://www.sqlalchemy.org/): database and connection manager for Python. I use a simple [SQLlite](https://www.sqlite.org/index.html) database in the backend.  
+- [SQLAlchemy](https://www.sqlalchemy.org/): orm and connection manager for Python. ~~I use a simple [SQLlite](https://www.sqlite.org/index.html) database in the backend.  ~~ 
+See this [link](https://devcenter.heroku.com/articles/sqlite3) to find out why that is actually a bad idea. TLDR: Heroku runs a ephemeral filesystem, i.e. no matter what you store or read, this will be cleared periodically (every 24 hours). A better solution is to use the [Heroku Postgresql add-on](https://elements.heroku.com/addons/heroku-postgresql). See below for further setup information. 
 - [GitHub](www.github.com): source code management
 - [Heroku](http://www.heroku.com/): to deploy the app 
 
 ## Further notes 
+
+### Heroku Postgres DB hosting 
+Setting up a postgresql in Heroku is straightforward. You just need to activate the [Heroku Postgress](https://www.heroku.com/postgres) add-on at your application dashboard. The database instance runs is hosted in AWS.
+
+After activating Heroku will add an extra global variable `DATABASE_URI` in `Config Vars`. These variables can be retrieved in your application as any other environmental variable:   
+
+```Python
+# Get the db URL from the Heroku config file 
+db_uri = os.getenv('DATABASE_URL')
+
+# Open a pool of connections with sqlalchemy
+engine = db.create_engine(db_uri, echo=False, pool_pre_ping=True)
+```
 
 ### Hosting images with Dash
 The dash application can render images saved in the ```assets``` directory. To call them and render them you can use the command:
