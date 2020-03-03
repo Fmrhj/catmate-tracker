@@ -16,9 +16,10 @@ from collections import deque
 import cat_modules as cats
 import dash_bootstrap_components as dbc
 import numpy as np
-import sqlite3
 import os
+import psycopg2
 import time
+import yaml
 
 # Global variables
 os.environ['TZ'] = 'Europe/Berlin'
@@ -28,18 +29,27 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # Style variables
 colors = {'background': '#FFFFFF', 'text': '#111111', 'general': 'RoyalBlue'}
 
-# SQL lite URI
-db_uri = "sqlite:///catmeals.sqlite"
+# DB URI from yaml file
+#with open(r'postgres_setup.yaml') as file:
+#    config = yaml.load(file, Loader=yaml.FullLoader)
+
+#db_uri = config['uri']
+
+# Alternatively read it directly from Heroku config
+db_uri = os.getenv('DATABASE_URL')
+
+# Open a pool of connections
+engine = db.create_engine(db_uri, echo=False, pool_pre_ping=True)
 
 app: Dash = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
 
 # Open connection to read cat_meals db
-def get_data(target_db_uri):
-    engine = db.create_engine(target_db_uri, echo=False)
-    tmp_table = pd.read_sql("SELECT * FROM cat_meals", con=engine)
-    tmp_table['next_meals'] = pd.to_datetime(tmp_table['next_meals'].str.strip(), format=standard_date_format)
+def get_data(engine_instance):
+    # Open connection
+    conn = engine_instance.connect()
+    tmp_table = pd.read_sql("SELECT * FROM cat_meals;", con=conn)
     tmp_table = tmp_table.drop('index', axis=1)
 
     # Get just the last 4 records
@@ -48,6 +58,8 @@ def get_data(target_db_uri):
     # Check the time format
     print("[STATUS] Actual future meal records:")
     print(tmp_table)
+    # Close connection
+    conn.close()
     return tmp_table
 
 
@@ -62,7 +74,7 @@ def generate_plot(data_frame_input):
                              mode='markers',
                              hovertemplate="date: %{x}<br>remaining meals: %{y}<extra></extra>"))
 
-    fig.update_layout(xaxis_range=[datetime.now() - timedelta(days=1),
+    fig.update_layout(xaxis_range=[datetime.now() - timedelta(days=0.5),
                                    datetime.now() + timedelta(days=1)],
                       title_text="",
                       template="plotly_white")
@@ -81,7 +93,8 @@ def generate_plot(data_frame_input):
         y=[-0.5],
         text=["Now"],
         mode="text",
-        showlegend=False
+        showlegend=False,
+        hovertemplate="%{x}<extra></extra>"
     ))
 
     return fig
@@ -165,16 +178,13 @@ app.layout = html.Div([
     html.Div(id="new-records", style={'textAlign': 'center'}),
 
     # Interval component: serves just to refresh the application
-
     dcc.Interval(id='interval-component', interval=30 * 1000, n_intervals=0),
 
     html.Hr(),
 
-    dcc.Markdown(f'''v1.1
-{datetime.now().strftime("%B %Y")}
+    dcc.Markdown(f'''v1.1 {datetime.now().strftime("%B %Y")}
 
-Check the project in [GitHub/Fmrhj](https://github.com/Fmrhj/catmate-tracker) 
-''',
+Project [GitHub/Fmrhj](https://github.com/Fmrhj/catmate-tracker)''',
                  style={'textAlign': 'center'})
 ])
 
@@ -208,14 +218,14 @@ def update_metrics(n):
     [Input("button", "n_clicks")])
 def add_and_show_records(n):
 
+    # If button is clicked at least once, trigger update
     if n is not None:
         # Create new pandas data frame with future meals
         new_records = cats.generate_next_meals_table()
         print("[UPDATE] New meals!")
         print(new_records)
 
-        # Open connection
-        engine = db.create_engine(db_uri, echo=False)
+        # Open connection to write records. Use global connection pool
         conn = engine.connect()
 
         # Write results
@@ -231,7 +241,7 @@ def add_and_show_records(n):
     Output("recent-update", "children"), Output("button", "style")],
     [Input('interval-component', 'n_intervals')])
 def check_recent_update(n):
-    tmp_check = get_data(db_uri)
+    tmp_check = get_data(engine)
     # Extract last time_stamp value
     last_value = tmp_check['time_stamp'][tmp_check.index[-1]]
     msg = ""
@@ -240,10 +250,12 @@ def check_recent_update(n):
     button_display = dict()
 
     # Check if the table has been update recently, i.e. in the last 2 hours
-    check_boolean = datetime.now() < datetime.strptime(last_value, standard_date_format) + timedelta(hours=12)
+    #check_boolean = datetime.now() < datetime.strptime(last_value, standard_date_format) + timedelta(hours=12)
+    hours_periodic_check = 24
+    check_boolean = datetime.now() < last_value + timedelta(hours=hours_periodic_check)
 
     if check_boolean:
-        msg = "Meals have been updated in the last 12 hours"
+        msg = "Meals have been refilled in the last {0} hours".format(hours_periodic_check)
         button_display = dict(display="none")
 
     return msg, button_display
@@ -255,8 +267,8 @@ def check_recent_update(n):
     [Input('interval-component', 'n_intervals')]
 )
 def update_plot(n):
-    # Get data from sqllite
-    tmp_data = get_data(db_uri)
+    # Get data from db
+    tmp_data = get_data(engine)
     return [generate_plot(tmp_data)]
 
 # table callback
@@ -269,8 +281,8 @@ def update_plot(n):
     [Input('interval-component', 'n_intervals')]
 )
 def update_table(n):
-    # Get data from sqllite
-    tmp_data = get_data(db_uri)
+    # Get data from db
+    tmp_data = get_data(engine)
 
     columns = [{"name": i, "id": i, "selectable": True} for i in tmp_data.columns]
     data = tmp_data.to_dict('records')
