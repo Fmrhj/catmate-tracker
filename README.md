@@ -33,7 +33,7 @@ The dash application can render images stored in the ```assets``` directory. To 
  html.Div(html.Img(src=app.get_asset_url("img_cat_stick_erich.jpg"), style={"width": "100%"})
 ```
 
-### JS date formats
+### JS date format
 
 Use the native JS format to filter date times. As mentioned in [this comment](https://stackoverflow.com/a/15952652) the correct JS date/time format is:
 
