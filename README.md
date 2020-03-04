@@ -5,7 +5,7 @@ My cats take their meals really seriously. I have been obligued to create a trac
 To build this simple application, I used:
 
 - [Dash](https://dash.plot.ly/): Python framework written on top of flask for fast web development and simple applications.
-- [Plotly](https://plot.ly/): API with interfaces for Python and R. 
+- [Plotly](https://plot.ly/): plotting API with interfaces for Python and R. 
 - [SQLAlchemy](https://www.sqlalchemy.org/): orm and connection manager for Python. Originally I thought using a simple [SQLlite](https://www.sqlite.org/index.html) database in the backend. See this [link](https://devcenter.heroku.com/articles/sqlite3) to find out why that is actually a bad idea. TLDR: Heroku runs an ephemeral filesystem, i.e. no matter what files you store or read, these will be cleared periodically (every 24 hours). A better solution is to use the [Heroku Postgresql add-on](https://elements.heroku.com/addons/heroku-postgresql). Read below further setup information. 
 - [GitHub](www.github.com): source code management
 - [Heroku](http://www.heroku.com/): to deploy the app 
@@ -13,9 +13,9 @@ To build this simple application, I used:
 ## Further notes 
 
 ### Heroku Postgres DB hosting 
-Setting up a postgresql in Heroku is straightforward. You just need to activate the [Heroku Postgress](https://www.heroku.com/postgres) add-on at your application dashboard. The database instance runs is hosted in AWS.
+Setting up a postgresql in Heroku is straightforward. You just need to activate the [Heroku Postgress](https://www.heroku.com/postgres) add-on at your application dashboard. The database instance is hosted in [AWS](https://aws.amazon.com/).
 
-After activating Heroku will add an extra global variable `DATABASE_URI` in `Config Vars`. These variables can be retrieved in your application as any other environmental variable:   
+After activating the add-on, Heroku will add an extra global variable `DATABASE_URL` in `Config Vars`. These variables can be retrieved in your application as any other environmental variable:   
 
 ```Python
 # Get the db URL from the Heroku config file 
@@ -26,9 +26,10 @@ engine = db.create_engine(db_uri, echo=False, pool_pre_ping=True)
 ```
 
 ### Hosting images with Dash
-The dash application can render images saved in the ```assets``` directory. To call them and render them you can use the command:
+The dash application can render images stored in the ```assets``` directory. To call and render them you can use the ```html.Img``` command:
 
 ```Python
+# html.Img wrapped in a html.Div 
  html.Div(html.Img(src=app.get_asset_url("img_cat_stick_erich.jpg"), style={"width": "100%"})
 ```
 
