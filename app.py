@@ -7,18 +7,14 @@ from dash import Dash
 import sqlalchemy as db
 import pandas as pd
 import dash_table
-from textwrap import dedent as d
 import plotly
 import plotly.graph_objects as go
 from datetime import datetime
 from datetime import timedelta
-from collections import deque
 import cat_modules as cats
-import dash_bootstrap_components as dbc
 import numpy as np
 import os
 import psycopg2
-import time
 import yaml
 
 # Global variables
@@ -46,18 +42,19 @@ server = app.server
 
 
 # Open connection to read cat_meals db
-def get_data(engine_instance):
+def get_data(engine_instance, all_records=False):
     # Open connection
     conn = engine_instance.connect()
     tmp_table = pd.read_sql("SELECT * FROM cat_meals;", con=conn)
     tmp_table = tmp_table.drop('index', axis=1)
 
     # Get just the last 4 records
-    tmp_table = tmp_table.iloc[-4:]
+    if not all_records:
+        tmp_table = tmp_table.iloc[-4:]
 
-    # Check the time format
+    # Always print the last 4 records
     print("[STATUS] Actual future meal records:")
-    print(tmp_table)
+    print(tmp_table.iloc[-4:])
     # Close connection
     conn.close()
     return tmp_table
@@ -267,12 +264,11 @@ def check_recent_update(n):
     [Input('interval-component', 'n_intervals')]
 )
 def update_plot(n):
-    # Get data from db
-    tmp_data = get_data(engine)
+    # Get all data from db
+    tmp_data = get_data(engine, all_records=True)
     return [generate_plot(tmp_data)]
 
 # table callback
-# plot callback
 @app.callback(
     [Output('table', 'data'),
      Output('table', 'columns'),
