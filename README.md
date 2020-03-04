@@ -53,3 +53,11 @@ style_data_conditional=[{
                     'color': 'white'} for x in sql_DF.columns
                 ]
 ```
+
+### Setting Heroku's application time zone 
+
+Since we rely on the local date to update the application, we need to set the cloud service to be configured at a specific time zone. In Heroku we can achieve this by setting a global variable `TZ` in `Config Vars`as explained in this [post](https://dev.to/paulasantamaria/change-the-timezone-on-a-heroku-app-2b4). In the Heroku CLI:
+
+```bash
+heroku config:add TZ="Europe/Berlin"
+```
