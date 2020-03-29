@@ -12,9 +12,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from datetime import timedelta
 import cat_modules as cats
-import numpy as np
 import os
-import psycopg2
 import yaml
 
 # Global variables
@@ -25,14 +23,17 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # Style variables
 colors = {'background': '#FFFFFF', 'text': '#111111', 'general': 'RoyalBlue'}
 
-# DB URI from yaml file
-#with open(r'postgres_setup.yaml') as file:
-#    config = yaml.load(file, Loader=yaml.FullLoader)
+# For debugging
+run_locally = False
 
-#db_uri = config['uri']
-
-# Alternatively read it directly from Heroku config
-db_uri = os.getenv('DATABASE_URL')
+if run_locally:
+    # DB URI from yaml file
+    with open(r'postgres_setup.yaml') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+        db_uri = config['uri']
+else:
+    # Alternatively read it directly from Heroku config
+    db_uri = os.getenv('DATABASE_URL')
 
 # Open a pool of connections
 engine = db.create_engine(db_uri, echo=False, pool_pre_ping=True)
@@ -41,9 +42,8 @@ app: Dash = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
 
-# Open connection to read cat_meals db
 def get_data(engine_instance, all_records=False):
-    # Open connection
+    # Open connection to read cat_meals db
     conn = engine_instance.connect()
     tmp_table = pd.read_sql("SELECT * FROM cat_meals;", con=conn)
     tmp_table = tmp_table.drop('index', axis=1)
@@ -61,6 +61,7 @@ def get_data(engine_instance, all_records=False):
 
 
 def generate_plot(data_frame_input):
+    # Generates plot
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data_frame_input['next_meals'],
                              y=data_frame_input['remaining_meals'],
@@ -122,8 +123,10 @@ app.layout = html.Div([
              ''',
                           style={'textAlign': 'center'}),
 
+            html.Br(),
+
              # Update button container
-             html.Div(html.Button('Update!',
+             html.Div(html.Button('Update meals!',
                                   id='button',
                                   style={'textAlign': 'center'}),
                       style={'textAlign': 'center'}
@@ -246,9 +249,8 @@ def check_recent_update(n):
     # Active button
     button_display = dict()
 
-    # Check if the table has been update recently, i.e. in the last 2 hours
-    #check_boolean = datetime.now() < datetime.strptime(last_value, standard_date_format) + timedelta(hours=12)
-    hours_periodic_check = 24
+    # Check if the table has been update recently, i.e. in the last 2,5 days
+    hours_periodic_check = 36
     check_boolean = datetime.now() < last_value + timedelta(hours=hours_periodic_check)
 
     if check_boolean:
@@ -267,6 +269,7 @@ def update_plot(n):
     # Get all data from db
     tmp_data = get_data(engine, all_records=True)
     return [generate_plot(tmp_data)]
+
 
 # table callback
 @app.callback(

@@ -43,8 +43,8 @@ def generate_next_meals(time_stamp_now=datetime.now()):
     Returns:
         list: with date for next meals
     """
-    today_evening = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 19:00:00", standard_date_format)
-    today_morning = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 07:00:00", standard_date_format)
+    today_evening = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 20:00:00", standard_date_format)
+    today_morning = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 08:00:00", standard_date_format)
 
     # Assign next meal to next following date today
     next_meal = max(today_evening, today_morning)
