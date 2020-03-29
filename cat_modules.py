@@ -51,7 +51,7 @@ def generate_next_meals(time_stamp_now=datetime.now()):
 
     # If the next meal is already in the past, take the next meal in the morning
     if next_meal < time_stamp_now:
-        tomorrow_morning = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 07:00:00",
+        tomorrow_morning = datetime.strptime(time_stamp_now.strftime("%Y-%m-%d") + " 08:00:00",
                                              standard_date_format) + timedelta(days=1)
         next_meal = tomorrow_morning
 
