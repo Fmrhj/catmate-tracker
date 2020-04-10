@@ -24,7 +24,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 colors = {'background': '#FFFFFF', 'text': '#111111', 'general': 'RoyalBlue'}
 
 # For debugging
-run_locally = True
+run_locally = False
 
 if run_locally:
     # DB URI from yaml file
