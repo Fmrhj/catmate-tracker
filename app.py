@@ -24,7 +24,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 colors = {'background': '#FFFFFF', 'text': '#111111', 'general': 'RoyalBlue'}
 
 # For debugging
-run_locally = False
+run_locally = True
 
 if run_locally:
     # DB URI from yaml file
@@ -115,7 +115,8 @@ app.layout = html.Div([
             # Title
             html.H1(children=['Catmate Tracker'],
                      style={'textAlign': 'center',
-                            'color': colors['text']}),
+                            'color': colors['general']
+                            }),
 
              # Markdown description
              dcc.Markdown('''
@@ -157,13 +158,14 @@ app.layout = html.Div([
             id='table',
             editable=False,
             style_as_list_view=True,
-            style_cell={'padding': '5px', 'textAlign': 'left'},
+            style_cell={'padding': '5px', 'textAlign': 'left', 'font-family':'sans-serif'},
             style_cell_conditional=[{'if': {'column_id': 'remaining_meals'}, 'textAlign': 'center'}],
             sort_action="native",
             page_action="native",
             style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
+                'backgroundColor': 'white',
+                'fontWeight': 'bold',
+                'fontColor': 'white'
             }
         )],
         className='row'
@@ -178,7 +180,7 @@ app.layout = html.Div([
     html.Div(id="new-records", style={'textAlign': 'center'}),
 
     # Interval component: serves just to refresh the application
-    dcc.Interval(id='interval-component', interval=30 * 1000, n_intervals=0),
+    dcc.Interval(id='interval-component', interval=10 * 1000, n_intervals=0),
 
     html.Hr(),
 
